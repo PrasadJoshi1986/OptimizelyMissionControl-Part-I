@@ -183,7 +183,7 @@ export default function App() {
             <img src="/profile.jpg" alt="Prasad Joshi" className="author-avatar-lg" />
             <div className="author-info">
               <strong>Prasad Joshi</strong>
-              <span>Cloud &amp; CMS Engineer · Optimizely Specialist</span>
+              <span>Cloud, Configered Commerce &amp; CMS Engineer · Optimizely Specialist</span>
             </div>
             <span className="author-series">Series: Part I of II</span>
           </div>
