@@ -1,4 +1,9 @@
 {
   "rootDirectory": "blog",
-  "framework": "vite"
+  "framework": "vite",
+  "build": {
+    "env": {
+      "NODE_VERSION": "22"
+    }
+  }
 }
