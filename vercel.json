@@ -1,9 +1,7 @@
 {
   "rootDirectory": "blog",
   "framework": "vite",
-  "build": {
-    "env": {
-      "NODE_VERSION": "22"
-    }
-  }
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }
