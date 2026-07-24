@@ -1,11 +1,11 @@
 # dependencies
-blog/node_modules/
+node_modules/
 
 # build output
-blog/dist/
+dist/
 
 # Vite cache
-blog/.vite/
+.vite/
 
 # env files
 .env
@@ -16,5 +16,5 @@ blog/.vite/
 .DS_Store
 Thumbs.db
 
-# original PDF (large, contains old branding)
-*.pdf
+# source archive
+source/*.pdf
