@@ -1,0 +1,20 @@
+# dependencies
+blog/node_modules/
+
+# build output
+blog/dist/
+
+# Vite cache
+blog/.vite/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# original PDF (large, contains old branding)
+*.pdf

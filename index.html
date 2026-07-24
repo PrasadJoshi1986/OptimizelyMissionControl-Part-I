@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optimizely Mission Control - Part I</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #f8f9fa;
+        --surface: #ffffff;
+        --primary: #0066cc;
+        --primary-dark: #004e9e;
+        --accent: #e8f0fe;
+        --text: #1a1a2e;
+        --text-muted: #5f6368;
+        --border: #e0e0e0;
+        --tag-bg: #e8f0fe;
+        --tag-text: #1558d6;
+        --code-bg: #f1f3f4;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+        --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+        --radius: 10px;
+        --max-w: 820px;
+      }
+
+      body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        min-height: 100vh;
+      }
+
+      /* ── NAV ── */
+      nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow-sm);
+      }
+      .nav-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 0 24px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .nav-logo {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--primary);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .nav-logo svg { flex-shrink: 0; }
+      .nav-sep { color: var(--border); margin: 0 4px; }
+      .nav-crumb { font-size: 0.875rem; color: var(--text-muted); }
+
+      /* ── PAGE WRAPPER ── */
+      .page {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      /* ── HERO / HEADER ── */
+      .post-header {
+        background: linear-gradient(135deg, #003e7e 0%, #0066cc 60%, #3a8eff 100%);
+        border-radius: var(--radius);
+        padding: 48px 40px 40px;
+        color: #fff;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow-md);
+      }
+      .post-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        color: #e8f0fe;
+      }
+      .post-title {
+        font-size: clamp(1.6rem, 4vw, 2.2rem);
+        font-weight: 800;
+        line-height: 1.25;
+        margin-bottom: 20px;
+        letter-spacing: -0.02em;
+      }
+      .post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        font-size: 0.875rem;
+        color: rgba(255,255,255,0.85);
+      }
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #fff;
+        flex-shrink: 0;
+      }
+
+      /* ── ARTICLE BODY ── */
+      .post-body {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 40px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+      }
+
+      .post-body p {
+        margin-bottom: 1.2em;
+        color: #2d3748;
+        font-size: 1.02rem;
+      }
+
+      .post-body h2 {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 2.4em 0 0.75em;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .post-body h2:first-child { margin-top: 0; }
+      .post-body h2 .h2-icon {
+        width: 28px;
+        height: 28px;
+        background: var(--primary);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .post-body h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 1.8em 0 0.5em;
+      }
+
+      /* ── STEP LISTS ── */
+      .steps {
+        list-style: none;
+        counter-reset: step;
+        margin: 1.2em 0 1.6em;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .steps li {
+        counter-increment: step;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.97rem;
+        color: #2d3748;
+      }
+      .steps li::before {
+        content: counter(step);
+        min-width: 26px;
+        height: 26px;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .steps li strong { color: var(--text); }
+
+      /* ── BULLET LISTS ── */
+      .feature-list {
+        list-style: none;
+        margin: 0.8em 0 1.4em;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .feature-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.97rem;
+        color: #2d3748;
+        padding: 2px 0;
+      }
+      .feature-list li::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        background: var(--primary);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 8px;
+      }
+
+      /* ── ACTION CARDS ── */
+      .action-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin: 1.2em 0 1.6em;
+      }
+      .action-card {
+        background: var(--accent);
+        border: 1px solid #c8d9f8;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .action-card-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--primary);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+      .action-card-text strong {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 2px;
+      }
+      .action-card-text span {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+
+      /* ── IMAGES ── */
+      .img-wrap {
+        margin: 1.8em 0;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+      }
+      .img-wrap img {
+        width: 100%;
+        display: block;
+      }
+      .img-caption {
+        background: var(--bg);
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        border-top: 1px solid var(--border);
+      }
+
+      /* ── REFERENCE CALLOUT ── */
+      .ref-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: #f0f7ff;
+        border: 1px solid #b8d4f8;
+        border-left: 4px solid var(--primary);
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 1.6em 0;
+        font-size: 0.9rem;
+      }
+      .ref-box a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .ref-box a:hover { text-decoration: underline; }
+
+      /* ── NOTE BOX ── */
+      .note-box {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-left: 4px solid #f59e0b;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 1.6em 0;
+        font-size: 0.9rem;
+        color: #78350f;
+      }
+
+      /* ── DIVIDER ── */
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2.4em 0;
+      }
+
+      /* ── FOOTER ── */
+      .post-footer {
+        margin-top: 32px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 28px 40px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: var(--shadow-sm);
+      }
+      .footer-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0066cc, #3a8eff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .footer-info strong {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .footer-info span {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .series-badge {
+        margin-left: auto;
+        background: var(--accent);
+        border: 1px solid #c8d9f8;
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      @media (max-width: 640px) {
+        .post-header { padding: 32px 24px 28px; }
+        .post-body { padding: 28px 20px; }
+        .post-footer { flex-direction: column; align-items: flex-start; }
+        .series-badge { margin-left: 0; }
+        .action-cards { grid-template-columns: 1fr 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState } = React;
+
+      const actions = [
+        { icon: "↺",  label: "Restart Site",                  desc: "Restart app in any environment" },
+        { icon: "DB", label: "Database Backup",               desc: "Backup DB for debug purposes" },
+        { icon: "🔑", label: "Generate DB Credentials",       desc: "Secure credentials for DB access" },
+        { icon: "⬆",  label: "Base Code Deploy",              desc: "Deploy base application code" },
+        { icon: "EX", label: "Extension Deployment",          desc: "Deploy custom extension changes" },
+        { icon: "⇄",  label: "Production User Files Sync",    desc: "Sync user files from production" },
+        { icon: "⇄",  label: "Production Database Sync",      desc: "Sync prod DB to lower environment" },
+      ];
+
+      function ImgFigure({ src, alt }) {
+        return (
+          <div className="img-wrap">
+            <img src={src} alt={alt} loading="lazy" />
+            <div className="img-caption">{alt}</div>
+          </div>
+        );
+      }
+
+      function RefBox({ href, label }) {
+        return (
+          <div className="ref-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0066cc" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{marginTop:2,flexShrink:0}}>
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>
+              <strong>Reference: </strong>
+              <a href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+            </span>
+          </div>
+        );
+      }
+
+      function BlogPost() {
+        return (
+          <>
+            <nav>
+              <div className="nav-inner">
+                <a className="nav-logo" href="#">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                  Tech Blog
+                </a>
+                <span className="nav-sep">/</span>
+                <span className="nav-crumb">Optimizely</span>
+              </div>
+            </nav>
+
+            <div className="page">
+              {/* ── HEADER ── */}
+              <header className="post-header">
+                <div className="post-tag">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                  Optimizely · Cloud Infrastructure
+                </div>
+                <h1 className="post-title">Optimizely Mission Control<br/>Part I</h1>
+                <div className="post-meta">
+                  <div className="meta-item">
+                    <div className="avatar">PJ</div>
+                    <span>Prasad Joshi</span>
+                  </div>
+                  <div className="meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    August 4, 2025
+                  </div>
+                  <div className="meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    5 min read
+                  </div>
+                </div>
+              </header>
+
+              {/* ── BODY ── */}
+              <article className="post-body">
+                <p>
+                  Optimizely provides powerful tools that make it easy to build, release, and manage cloud
+                  infrastructure efficiently.
+                </p>
+
+                {/* ACCESS */}
+                <h2>
+                  <span className="h2-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </span>
+                  Optimizely Mission Control Access
+                </h2>
+                <p>
+                  To use this tool, an <strong>Opti ID</strong> is required. Once you have an Opti ID, request
+                  that your organization grants access to your user account. Alternatively, you can raise a
+                  ticket with the <strong>Optimizely Support</strong> team along with approval from your
+                  project organization.
+                </p>
+
+                {/* KEY ACTIONS */}
+                <h2>
+                  <span className="h2-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </span>
+                  Key Actions
+                </h2>
+                <p>
+                  This tool provides various essential actions that can be performed for managing your cloud
+                  environments effectively:
+                </p>
+
+                <div className="action-cards">
+                  {actions.map((a, i) => (
+                    <div className="action-card" key={i}>
+                      <div className="action-card-icon">{a.icon}</div>
+                      <div className="action-card-text">
+                        <strong>{a.label}</strong>
+                        <span>{a.desc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <ImgFigure src="images/Mission-Control-Actions.png" alt="Mission Control — available actions" />
+
+                <p>Let's walk through each of these actions step by step.</p>
+
+                <hr className="divider" />
+
+                {/* RESTART SITE */}
+                <h2>
+                  <span className="h2-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  </span>
+                  Restart Site
+                </h2>
+                <p>
+                  The <strong>Restart Site</strong> option is handy when a website restart is required due to
+                  configuration changes. For example, updates to the storage or search provider often require
+                  a restart. Additionally, if an integration job gets stuck, the ability to restart the site
+                  helps restore normal functionality.
+                </p>
+
+                <h3>How to restart the website</h3>
+                <ol className="steps">
+                  <li>Log in to <strong>Mission Control</strong>.</li>
+                  <li>Navigate to the <strong>Customers</strong> tab.</li>
+                  <li>Select the appropriate <strong>Customer</strong>.</li>
+                </ol>
+
+                <ImgFigure src="images/Mission-Control-Dashbord.png" alt="Mission Control — Dashboard / Customers tab" />
+
+                <ol className="steps" style={{counterReset:'step 3'}}>
+                  <li>Choose the <strong>Environment</strong> where the restart is needed.</li>
+                </ol>
+
+                <ImgFigure src="images/Mission-Control-Instances.png" alt="Mission Control — Environment instances" />
+
+                <ol className="steps" style={{counterReset:'step 4'}}>
+                  <li>Click on the <strong>Action</strong> dropdown in the left pane.</li>
+                </ol>
+
+                <ImgFigure src="images/Restart-Website-Options-1.png" alt="Mission Control — Action dropdown" />
+
+                <ol className="steps" style={{counterReset:'step 5'}}>
+                  <li>Select <strong>Restart Site</strong> from the list.</li>
+                  <li>
+                    A pop-up will appear — either <strong>schedule the restart</strong> or click{" "}
+                    <strong>Continue</strong> for an <strong>immediate restart</strong>.
+                  </li>
+                </ol>
+
+                <ImgFigure src="images/Restart-Website-Options.png" alt="Mission Control — Restart site pop-up" />
+
+                <RefBox
+                  href="https://support.optimizely.com/hc/en-us/articles/29755553302797-Restart-Site"
+                  label="Restart Site – Optimizely Support"
+                />
+
+                <hr className="divider" />
+
+                {/* DATABASE BACKUP */}
+                <h2>
+                  <span className="h2-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  </span>
+                  Database Backup
+                </h2>
+                <p>
+                  Using this option, you can take a backup from a Sandbox or Production instance and import
+                  it into the local environment to debug issues. The backup file is generated with a{" "}
+                  <code style={{background:'var(--code-bg)',padding:'2px 6px',borderRadius:4,fontSize:'0.9em',fontFamily:'monospace'}}>.bacpac</code>{" "}
+                  extension.
+                </p>
+
+                <h3>Steps to take a backup</h3>
+                <ol className="steps">
+                  <li>Log in to <strong>Mission Control</strong>.</li>
+                  <li>Navigate to the <strong>Customers</strong> tab.</li>
+                </ol>
+
+                <ImgFigure src="images/Mission-Control-Instances.png" alt="Mission Control — Instances view" />
+
+                <ol className="steps" style={{counterReset:'step 2'}}>
+                  <li>Select <strong>Database Backup</strong> from the list.</li>
+                </ol>
+
+                <ImgFigure src="images/Mission-Control-Database-backup-option.png" alt="Mission Control — Database Backup option" />
+
+                <ol className="steps" style={{counterReset:'step 3'}}>
+                  <li>A pop-up will appear prompting for a scheduled backup time.</li>
+                  <li>
+                    Set <strong>Skip Log</strong> to <strong>False</strong> to minimize the backup size.
+                  </li>
+                </ol>
+
+                <ImgFigure src="images/Database-backup-Options.png" alt="Database backup — options pop-up" />
+
+                <ol className="steps" style={{counterReset:'step 5'}}>
+                  <li>Click <strong>Continue</strong> and wait for the process to complete.</li>
+                  <li>Once finished, click the provided link to <strong>download the backup file</strong>.</li>
+                </ol>
+
+                <ImgFigure src="images/Mission-Control-Database-backup-complication.png" alt="Mission Control — Backup download link" />
+
+                <RefBox
+                  href="https://support.optimizely.com/hc/en-us/articles/29756299053965-Database-Backup"
+                  label="Database Backup – Optimizely Support"
+                />
+
+                <div className="note-box">
+                  Stay tuned for <strong>Part II</strong> where we'll explore the remaining Mission Control
+                  actions — Generate Database Credentials, Base Code Deploy, Extension Deployment, and
+                  Production Sync features.
+                </div>
+              </article>
+
+              {/* ── AUTHOR FOOTER ── */}
+              <div className="post-footer">
+                <div className="footer-avatar">PJ</div>
+                <div className="footer-info">
+                  <strong>Prasad Joshi</strong>
+                  <span>Cloud &amp; CMS Engineer · Optimizely Specialist</span>
+                </div>
+                <span className="series-badge">Series: Part I of II</span>
+              </div>
+            </div>
+          </>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<BlogPost />);
+    </script>
+  </body>
+</html>
