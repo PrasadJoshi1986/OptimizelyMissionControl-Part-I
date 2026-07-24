@@ -185,7 +185,7 @@ export default function App() {
               <strong>Prasad Joshi</strong>
               <span>Cloud, Configered Commerce &amp; CMS Engineer · Optimizely Specialist</span>
             </div>
-            <span className="author-series">Series: Part I of II</span>
+            <span className="author-series">Series: Part I of III</span>
           </div>
         </Section>
       </div>

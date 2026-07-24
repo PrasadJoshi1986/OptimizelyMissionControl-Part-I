@@ -9,7 +9,7 @@ export default function Nav() {
         <span className="nav-sep">/</span>
         <span className="nav-crumb">Optimizely</span>
         <div className="nav-spacer" />
-        <span className="nav-pill">Part I of II</span>
+        <span className="nav-pill">Part I of III</span>
       </div>
     </nav>
   );
